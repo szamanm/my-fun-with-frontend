@@ -23,7 +23,7 @@
       }
     </style>
     <script>
-      /* 2014 */
+      /* 2014 + 2019 tiny performance fixups */
 
       var d = document;
       var arrows = [];
@@ -32,10 +32,10 @@
 
       function init() {
         generateArrows();
-        d.addEventListener("mousemove", handleMM);
+        d.addEventListener("mousemove", handleMM, false);
         d.addEventListener("mousedown", function() {
           is_painting = !is_painting;
-        });
+        }, false);
       }
       var prev_x, prev_y;
       function paint(e) {
@@ -101,7 +101,6 @@
 
       function setRotation(ele, val) {
         var s = ele.style;
-        ele.id = Math.round(val * 1000) / 1000;
         if ("transform" in s) {
           s.transform = "rotate(" + val + "deg)";
         } else if ("OTransform" in s) {

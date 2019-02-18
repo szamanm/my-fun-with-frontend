@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <title>Ball</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      #ball {
+        --ball-size: 30vmin;
+        position: absolute;
+        left: calc(50% - var(--ball-size) / 2);
+        top: calc(50% - var(--ball-size) / 2);
+        width: var(--ball-size);
+        height: var(--ball-size);
+        border-radius: 50%;
+
+        background: radial-gradient(
+          circle at 30% 30%,
+          rgba(169, 3, 41, 1) 0%,
+          rgba(109, 0, 25, 1) 100%
+        );
+
+        will-change: transform;
+      }
+    </style>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const ball = document.querySelector("#ball");
+
+
+
+
+
+        
+      });
+    </script>
+  </head>
+  <body>
+    <div id="ball"></div>
+  </body>
+</html>
