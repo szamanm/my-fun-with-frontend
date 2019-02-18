@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <title>Arrows</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      .arrow {
+        width: 30px;
+        height: 120px;
+        position: absolute;
+        border-radius: 20px;
+      }
+      .dot {
+        width: 2px;
+        height: 2px;
+        position: absolute;
+        background: red;
+        border-radius: 50px;
+      }
+    </style>
+    <script>
+      /* 2014 */
+
+      var d = document;
+      var arrows = [];
+      var is_painting = true;
+      d.addEventListener("DOMContentLoaded", init);
+
+      function init() {
+        generateArrows();
+        d.addEventListener("mousemove", handleMM);
+        d.addEventListener("mousedown", function() {
+          is_painting = !is_painting;
+        });
+      }
+      var prev_x, prev_y;
+      function paint(e) {
+        tmp = d.createElement("div");
+        tmp.className = "dot";
+        tmp.style.left = e.pageX + "px";
+        tmp.style.height =
+          Math.abs(prev_y - e.pageY) > 2
+            ? Math.abs(prev_y - e.pageY) + "px"
+            : "2px";
+        tmp.style.width =
+          Math.abs(prev_x - e.pageX) > 2
+            ? Math.abs(prev_x - e.pageX) + "px"
+            : "2px";
+        tmp.style.top = e.pageY + "px";
+        d.body.appendChild(tmp);
+        //alert('paint', e);
+      }
+
+      function handleMM(e) {
+        if (is_painting)
+          for (var i = 0, j = arrows.length; i < j; i++) {
+            var rot =
+              90 +
+              Math.atan2(
+                e.pageY - arrows[i].centerY,
+                e.pageX - arrows[i].centerX
+              ) /
+                (Math.PI / 180);
+            setRotation(arrows[i], rot);
+          }
+      }
+
+      function generateArrows() {
+        var source = d.createElement("div");
+        source.className = "arrow";
+        var a = 20,
+          i_max = 30,
+          j_max = 15,
+          start = 50;
+        var frag = d.createDocumentFragment();
+        var tmp;
+        for (var i = 0; i < i_max; i++) {
+          for (var j = 0; j < j_max; j++) {
+            tmp = source.cloneNode(true);
+            tmp.style.left = start + a + i * a + "px";
+            tmp.style.top = start + a + j * a + "px";
+            tmp.centerX = start + a + i * a + 25;
+            tmp.centerY = start + a + j * a + 40;
+            tmp.style.backgroundColor =
+              "rgb(" +
+              Math.round(i * (200 / i_max) + 25) +
+              ", 160, " +
+              Math.round(j * (200 / j_max) + 25) +
+              ")";
+            frag.appendChild(tmp);
+            arrows.push(tmp);
+          }
+        }
+
+        d.body.appendChild(frag);
+      }
+
+      function setRotation(ele, val) {
+        var s = ele.style;
+        ele.id = Math.round(val * 1000) / 1000;
+        if ("transform" in s) {
+          s.transform = "rotate(" + val + "deg)";
+        } else if ("OTransform" in s) {
+          s.OTransform = "rotate(" + val + "deg)";
+        } else if ("WebkitTransform" in s) {
+          s.WebkitTransform = "rotate(" + val + "deg)";
+        } else if ("MozTransform" in s) {
+          s.MozTransform = "rotate(" + val + "deg)";
+        } else if ("MsTransform" in s) {
+          s.MsTransform = "rotate(" + val + "deg)";
+        }
+      }
+    </script>
+  </head>
+  <body></body>
+</html>
