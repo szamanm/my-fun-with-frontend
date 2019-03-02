@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <title>kaleidoscope</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        width: 1000vw;
+        height: 1000vh;
+      }
+
+      #pointer {
+        position: fixed;
+        width: 10px;
+        height: 10px;
+        background: red;
+        border-radius: 50%;
+      }
+    </style>
+
+    <script>
+      let xScroll = 0,
+        yScroll = 0;
+      let xMove = 0,
+        yMove = 0;
+
+      let x = 0;
+      let y = 0;
+
+      const setValues = () => {
+        y = yScroll + yMove;
+        x = xScroll + xMove;
+
+        const pointer = document.getElementById('pointer');
+        pointer.style.top = `${y / 2}%`;
+        pointer.style.left = `${x / 2}%`;
+      };
+
+      const scrollHandler = () => {
+        const { scrollY, scrollX } = window;
+        const { offsetWidth, offsetHeight } = document.body;
+        xScroll = scrollX / offsetWidth * 100;
+        yScroll = scrollY / offsetHeight * 100;
+        setValues();
+      };
+
+      const mousemoveHandler = ({screenX, screenY}) => {
+        const { innerWidth, innerHeight } = window;
+        xMove = screenX / innerWidth * 100;
+        yMove = screenY / innerHeight * 100;
+        setValues();
+      };
+
+      window.addEventListener("scroll", scrollHandler, false);
+      document.addEventListener("mousemove", mousemoveHandler, false);
+    </script>
+  </head>
+  <body>
+    <div id="pointer"></div>
+  </body>
+</html>
