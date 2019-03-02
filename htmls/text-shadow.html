@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <title>Text-shadow</title>
+    <style>
+      body {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+      }
+      #text {
+        font-family: sans-serif;
+        font-size: 30px;
+        color: white;
+        font-weight: bold;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="text">move your<br />cursor around</div>
+  </body>
+
+  <script>
+    const text = document.getElementById("text");
+
+    const COLOR = "rgba(0,0,0,0.1)";
+    const SHADOW_LEVELS = 10; // 1+
+    const BLUR_FACTOR = 0.2; // 0 < x < 1
+    const DISTANCE_FACTOR = 0.5; // 0 < x < 1
+
+    const round = val => Math.round(val * 10) / 10;
+
+    const calcPosition = (page, center) => {
+      const result = round(Math.pow(Math.abs(page - center)));
+      return page < center ? result : -1 * result;
+    };
+
+    const calcBlur = (x1, y1, x2, y2) =>
+      round(Math.pow(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2), BLUR_FACTOR));
+
+    const getTextShadow = ({ x, y, blur }, scale) =>
+      `${x * scale}px ${y * scale}px ${blur * scale}px ${COLOR}`;
+
+    const getTextShadowsArray = ({ pageY, pageX, centerX, centerY }, depth) =>
+      Array(depth)
+        .fill({
+          x: calcPosition(pageX, centerX),
+          y: calcPosition(pageY, centerY),
+          blur: calcBlur(pageX, pageY, centerX, centerY)
+        })
+        .map((params, index) =>
+          getTextShadow(params, round((index + 1) / depth))
+        );
+
+    document.addEventListener("mousemove", ({ pageY, pageX }) => {
+      const centerX = document.body.clientWidth / 2;
+      const centerY = document.body.clientHeight / 2;
+      const textShadows = getTextShadowsArray(
+        {
+          pageY,
+          pageX,
+          centerX,
+          centerY
+        },
+        SHADOW_LEVELS
+      );
+      text.style.textShadow = textShadows.join(", ");
+    });
+  </script>
+</html>
