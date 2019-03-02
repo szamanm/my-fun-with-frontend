@@ -35,7 +35,7 @@
     const round = val => Math.round(val * 10) / 10;
 
     const calcPosition = (page, center) => {
-      const result = round(Math.pow(Math.abs(page - center)));
+      const result = round(Math.pow(Math.abs(page - center), DISTANCE_FACTOR));
       return page < center ? result : -1 * result;
     };
 
