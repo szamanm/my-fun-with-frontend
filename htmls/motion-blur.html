@@ -3,18 +3,20 @@
   <head>
     <meta charset="utf-8" />
     <title>motion blur</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+
     <style>
       body {
         margin: 0;
         padding: 0;
-        width: 1000vw;
-        height: 1000vh;
+        width: 100vw;
+        height: 100vh;
       }
 
       #canvas {
-        position: fixed;
-        top: 0;
-        left: 0;
         width: 100%;
         height: 100%;
         background: darkslategray;
@@ -22,32 +24,40 @@
     </style>
 
     <script>
-      let xScroll = 0,
-        yScroll = 0;
-      let xMove = 0,
-        yMove = 0;
+      const size = 500;
 
       const items = [];
 
-      const updateItems = () => {
-        ctx.fillStyle = "rgba(0, 0, 0, .05)";
-        ctx.fillRect(0, 0, 400, 400);
-        draw((xScroll + xMove) * 2, (yScroll + yMove) * 2);
+      const updateItems = positions => {
+        ctx.fillStyle = "rgba(0, 0, 0, .025)";
+        ctx.fillRect(0, 0, size, size);
+        console.log(positions[0]);
+        positions.map(({ x, y }) => draw(x, y));
       };
 
-      const scrollHandler = () => {
-        const { scrollY, scrollX } = window;
-        const { offsetWidth, offsetHeight } = document.body;
-        xScroll = (scrollX / offsetWidth) * 100;
-        yScroll = (scrollY / offsetHeight) * 100;
-        updateItems();
-      };
-
-      const mousemoveHandler = ({ screenX, screenY }) => {
+      const mousemoveHandler = ({ clientX, clientY }) => {
         const { innerWidth, innerHeight } = window;
-        xMove = (screenX / innerWidth) * 100;
-        yMove = (screenY / innerHeight) * 100;
-        updateItems();
+        updateItems([
+          {
+            x: (clientX / innerWidth) * size,
+            y: (clientY / innerHeight) * size
+          }
+        ]);
+      };
+
+      const touchmoveHandler = ({ touches }) => {
+        const { innerWidth, innerHeight } = window;
+        updateItems(
+          Array(touches.length)
+            .fill(0)
+            .map((_, index) => {
+              const { clientX, clientY } = touches[index];
+              return {
+                x: (clientX / innerWidth) * size,
+                y: (clientY / innerHeight) * size
+              };
+            })
+        );
       };
 
       let ctx;
@@ -57,23 +67,26 @@
         ctx.shadowColor = "hotpink";
         ctx.shadowBlur = 16;
         ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(x + Math.sin(x / 10) * 25, y + 25);
-        ctx.lineTo(x + 25, y - Math.sin(x / 10) * 25);
+        ctx.arc(x, y, 20, 0, 360);
         ctx.fill();
       };
 
       const init = () => {
         const canvas = document.getElementById("canvas");
-        canvas.height = 400;
-        canvas.width = 400;
+        canvas.height = size;
+        canvas.width = size;
         ctx = canvas.getContext("2d");
         draw(0, 0);
       };
 
-      window.addEventListener("scroll", scrollHandler, false);
       document.addEventListener("mousemove", mousemoveHandler, false);
+      document.addEventListener("touchmove", touchmoveHandler, false);
       document.addEventListener("DOMContentLoaded", init);
+
+      // stop safari from zooming in:
+      document.addEventListener("gesturestart", e => {
+        e.preventDefault();
+      });
     </script>
   </head>
   <body>
