@@ -2,7 +2,7 @@
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8" />
-    <title>kaleidoscope</title>
+    <title>random balls</title>
     <style>
       body {
         margin: 0;
@@ -31,39 +31,34 @@
       let xMove = 0,
         yMove = 0;
 
-      const colorBall = (x, y, r, baseDeg) => ({
+      const dustItem = (x, y, r, hue, opacity = 1) => ({
         style: `
           left: ${x}vw;
           top: ${y}vh;
-          width: 4vh;
-          height: 4vh;
-          background: hsl(${Math.round(Math.random() * 250)}, 50%, 25%);
+          width: ${r}vmin;
+          height: ${r}vmin;
+          opacity: ${opacity};
+          background: hsla(${hue}, 50%, 60%);
           border-radius: 50%`,
         change: (style, mouseX, mouseY) => {
-          style.transform = `translateX(${mouseX / r}vh) translateY(${mouseY /
-            r}vh) rotate(${(mouseX + mouseY + baseDeg) *
-            r}deg) translateX(${r}vh)`;
+          style.transform = `translateX(${Math.sin(mouseY / r) * 60 +
+            40 -
+            mouseX / 5}vh) translateY(${Math.sin(mouseX / r) * 60 +
+            40 +
+            mouseY / 5}vh)`;
         }
       });
 
-      const circleItems = (x, y, r, n = 10) =>
-        Array(n)
-          .fill(0)
-          .map((_, i) => colorBall(x, y, r, i * (360 / n)));
-
-      const items = Array(20)
+      const items = Array(150)
         .fill(0)
-        .reduce(
-          acc => [
-            ...acc,
-            ...circleItems(
-              Math.random() * 100 - 20,
-              Math.random() * 100 - 20,
-              Math.round(Math.random() * 8 + 4),
-              Math.round(Math.random() * 15 + 1)
-            )
-          ],
-          []
+        .map(() =>
+          dustItem(
+            Math.random() * 100 - 20,
+            Math.random() * 100 - 20,
+            Math.random() * 15 + 2,
+            Math.round(Math.random() * 250),
+            Math.random()
+          )
         );
 
       const updateItems = () => {
