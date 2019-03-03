@@ -41,9 +41,9 @@
           background: hsla(${hue}, 50%, 60%);
           border-radius: 50%`,
         change: (style, mouseX, mouseY) => {
-          style.transform = `translateX(${Math.sin(mouseY / r) * 60 +
+          style.transform = `translateX(${Math.sin(mouseY / r + x) * 60 +
             40 -
-            mouseX / 5}vh) translateY(${Math.sin(mouseX / r) * 60 +
+            mouseX / 5}vh) translateY(${Math.sin(mouseX / r + y) * 60 +
             40 +
             mouseY / 5}vh)`;
         }
