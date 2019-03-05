@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <title>drawing animation</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      #canvas {
+        width: 100%;
+        height: 90%;
+        background: darkslategray;
+      }
+    </style>
+
+    <script>
+      class Draw {
+        ctx = undefined;
+        height = 0;
+        width = 0;
+        pointSize = 0;
+
+        constructor(canvas, width, height) {
+          this.width = width;
+          this.height = height;
+          canvas.height = height;
+          canvas.width = width;
+          this.pointSize = (width + height) / 100;
+          this.ctx = canvas.getContext("2d");
+        }
+
+        dot(x, y) {
+          this.ctx.fillStyle = "white";
+          this.ctx.shadowColor = "rgba(255, 255, 255, 0.3)";
+          this.ctx.shadowBlur = 16;
+          this.ctx.beginPath();
+          this.ctx.arc(x, y, this.pointSize, 0, 360);
+          this.ctx.fill();
+        }
+
+        line(from, to) {
+          this.ctx.strokeStyle = "white";
+          this.ctx.shadowColor = "rgba(255, 255, 255, 0.3)";
+          this.ctx.lineWidth = this.pointSize;
+          this.ctx.shadowBlur = 16;
+
+          this.ctx.beginPath();
+          this.ctx.moveTo(from.x, from.y);
+          this.ctx.lineTo(to.x, to.y);
+          this.ctx.stroke();
+        }
+
+        paintSequence(sequence) {
+          sequence.reduce((previous, current) => {
+            if (previous) {
+              this.line(previous.x, previous.y, current.x, current.y);
+            }
+            return current;
+          }, undefined);
+        }
+
+        fill(color = "darkslategray") {
+          this.ctx.fillStyle = color;
+          this.ctx.fillRect(0, 0, this.width, this.height);
+        }
+
+        clear() {
+          this.fill();
+        }
+
+        nextFrameEffect() {
+          this.fill("rgba(47, 79, 79, 0.75)");
+        }
+      }
+
+      // * * * * * * * * * * * * * * * * * * * * * * *
+      class MoveHistory {
+        allFrames = [];
+        frame = [];
+        move = [];
+        draw = undefined;
+
+        constructor(drawObject) {
+          this.draw = drawObject;
+        }
+
+        startMove(firstItem) {
+          this.frame.push([firstItem]);
+        }
+
+        last() {
+          const lastMove = this.frame[this.frame.length - 1];
+          return lastMove[lastMove.length - 1];
+        }
+
+        push(...value) {
+          this.move.push(...value);
+        }
+
+        nextFrame() {
+          this.allFrames.push([...this.frame]);
+          this.frame = [];
+          this.draw.nextFrameEffect();
+        }
+
+        undo() {
+          this.frame.pop();
+          this.draw.clear();
+          this.draw.paintSequence(this.frame);
+        }
+      }
+
+      class Handlers {
+        draw = undefined;
+        moveHistory = undefined;
+
+        mouseDrawing = false;
+
+        constructor(draw, moveHistory, canvas) {
+          this.moveHistory = moveHistory;
+          this.draw = draw;
+          canvas.addEventListener("mousedown", this.mouseDown, false);
+          canvas.addEventListener("mouseup", this.mouseUp, false);
+          canvas.addEventListener("mousemove", this.mouseMove, false);
+
+          canvas.addEventListener("touchstart", this.touchStart, false);
+          canvas.addEventListener("touchmove", this.touchMove, {
+            passive: false
+          });
+        }
+
+        mouseDown = ({ clientX: x, clientY: y }) => {
+          this.mouseDrawing = true;
+          this.moveHistory.startMove({ x, y });
+        };
+
+        mouseUp = () => {
+          this.mouseDrawing = false;
+        };
+
+        mouseMove = ({ clientX: x, clientY: y }) => {
+          if (this.mouseDrawing === false) return;
+          this.draw.line({ x, y }, this.moveHistory.last());
+          this.moveHistory.push({ x, y });
+        };
+
+        touchStart = () => {
+          this.moveHistory.startMove();
+        };
+
+        touchMove = e => {
+          const { touches } = e;
+          e.preventDefault();
+          const { innerWidth, innerHeight } = window;
+          const move = {
+            x: touches[0].pageX,
+            y: touches[0].pageY
+          };
+          this.draw.paintSequence(move);
+          this.moveHistory.push(move);
+        };
+      }
+
+      const ui = {
+        undo: undefined,
+        nextFrame: undefined
+      };
+
+      const init = () => {
+        const canvas = document.getElementById("canvas");
+        const draw = new Draw(canvas, canvas.offsetWidth, canvas.offsetHeight);
+        const moveHistory = new MoveHistory(draw);
+        new Handlers(draw, moveHistory, canvas);
+        ui.undo = moveHistory.undo.bind(moveHistory);
+        ui.nextFrame = moveHistory.nextFrame.bind(moveHistory);
+      };
+
+      document.addEventListener("DOMContentLoaded", init);
+    </script>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+    <button class="button" onClick="ui.undo()">undo</button>
+    <button class="button" onClick="ui.nextFrame()">
+      move to next frame
+    </button>
+  </body>
+</html>
