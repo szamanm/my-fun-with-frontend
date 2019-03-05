@@ -40,12 +40,12 @@
           this.ctx = canvas.getContext("2d");
         }
 
-        dot(x, y) {
+        dot({ x, y }) {
           this.ctx.fillStyle = "white";
           this.ctx.shadowColor = "rgba(255, 255, 255, 0.3)";
           this.ctx.shadowBlur = 16;
           this.ctx.beginPath();
-          this.ctx.arc(x, y, this.pointSize, 0, 360);
+          this.ctx.arc(x, y, this.pointSize / 2, 0, 360);
           this.ctx.fill();
         }
 
@@ -64,8 +64,9 @@
         paintSequence(sequence) {
           sequence.reduce((previous, current) => {
             if (previous) {
-              this.line(previous.x, previous.y, current.x, current.y);
+              this.line(previous, current);
             }
+            this.dot(current);
             return current;
           }, undefined);
         }
@@ -88,7 +89,6 @@
       class MoveHistory {
         allFrames = [];
         frame = [];
-        move = [];
         draw = undefined;
 
         constructor(drawObject) {
@@ -105,7 +105,7 @@
         }
 
         push(...value) {
-          this.move.push(...value);
+          this.frame[this.frame.length - 1].push(...value);
         }
 
         nextFrame() {
@@ -142,7 +142,9 @@
 
         mouseDown = ({ clientX: x, clientY: y }) => {
           this.mouseDrawing = true;
-          this.moveHistory.startMove({ x, y });
+          const point = { x, y };
+          this.moveHistory.startMove(point);
+          this.draw.dot(point);
         };
 
         mouseUp = () => {
@@ -151,8 +153,12 @@
 
         mouseMove = ({ clientX: x, clientY: y }) => {
           if (this.mouseDrawing === false) return;
-          this.draw.line({ x, y }, this.moveHistory.last());
-          this.moveHistory.push({ x, y });
+          
+          const point = { x, y} ;
+          
+          this.draw.line(point, this.moveHistory.last());
+          this.draw.dot(point);
+          this.moveHistory.push(point);
         };
 
         touchStart = () => {
