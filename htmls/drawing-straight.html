@@ -2,7 +2,7 @@
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8" />
-    <title>drawing animation</title>
+    <title>drawing straight</title>
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
@@ -24,8 +24,8 @@
       }
 
       .button {
-        padding: 1.5vh;
-        font-size: 1.5vh;
+        padding: 2vh;
+        font-size: 2vh;
         border-radius: 1vh;
         margin: 1vh;
       }
@@ -53,9 +53,7 @@
 
         line(from, to) {
           this.ctx.strokeStyle = "white";
-          this.ctx.shadowColor = "rgba(255, 255, 255, 0.3)";
           this.ctx.lineWidth = this.pointSize;
-          this.ctx.shadowBlur = 16;
 
           this.ctx.beginPath();
           this.ctx.moveTo(from.x, from.y);
@@ -152,9 +150,7 @@
           canvas.addEventListener("mouseup", this.mouseUp, false);
           canvas.addEventListener("mousemove", this.mouseMove, false);
 
-          canvas.addEventListener("touchstart", this.touchStart, {
-            passive: false
-          });
+          canvas.addEventListener("touchstart", this.touchStart, false);
           canvas.addEventListener("touchmove", this.touchMove, {
             passive: false
           });
@@ -173,18 +169,6 @@
           this.mouseDrawing = false;
         };
 
-        touchStart = e => {
-          const { touches } = e;
-          e.preventDefault();
-
-          const point = {
-            x: touches[0].pageX,
-            y: touches[0].pageY
-          };
-          this.moveHistory.startMove(point);
-          this.draw.dot(point);
-        };
-
         mouseMove = ({ clientX: x, clientY: y }) => {
           if (this.mouseDrawing === false) return;
 
@@ -195,17 +179,20 @@
           this.moveHistory.push(point);
         };
 
+        touchStart = () => {
+          this.moveHistory.startMove();
+        };
+
         touchMove = e => {
           const { touches } = e;
           e.preventDefault();
-          const point = {
+          const { innerWidth, innerHeight } = window;
+          const move = {
             x: touches[0].pageX,
             y: touches[0].pageY
           };
-
-          this.draw.line(point, this.moveHistory.last());
-          this.draw.dot(point);
-          this.moveHistory.push(point);
+          this.draw.paintSequence(move);
+          this.moveHistory.push(move);
         };
       }
 
@@ -233,10 +220,5 @@
   <body>
     <canvas id="canvas"></canvas>
     <button class="button" onClick="ui.undo()">undo</button>
-    <button class="button" onClick="ui.nextFrame()">
-      move to next frame
-    </button>
-    <button class="button" onClick="ui.play()">play</button>
-    <button class="button" onClick="ui.stop()">stop</button>
   </body>
 </html>
