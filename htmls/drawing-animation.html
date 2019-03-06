@@ -22,15 +22,17 @@
         height: 90%;
         background: darkslategray;
       }
+
+      .button {
+        padding: 2vh;
+        font-size: 2vh;
+        border-radius: 1vh;
+        margin: 1vh;
+      }
     </style>
 
     <script>
       class Draw {
-        ctx = undefined;
-        height = 0;
-        width = 0;
-        pointSize = 0;
-
         constructor(canvas, width, height) {
           this.width = width;
           this.height = height;
@@ -87,12 +89,10 @@
 
       // * * * * * * * * * * * * * * * * * * * * * * *
       class MoveHistory {
-        allFrames = [];
-        frame = [];
-        draw = undefined;
-
         constructor(drawObject) {
           this.draw = drawObject;
+          this.allFrames = [];
+          this.frame = [];
         }
 
         startMove(firstItem) {
@@ -109,24 +109,42 @@
         }
 
         nextFrame() {
-          this.allFrames.push([...this.frame]);
+          this.allFrames.push(this.frame);
           this.frame = [];
           this.draw.nextFrameEffect();
         }
 
         undo() {
           this.frame.pop();
+          this.drawFrame(this.frame);
+        }
+
+        drawFrame(frameArray) {
           this.draw.clear();
-          this.draw.paintSequence(this.frame);
+          frameArray.map(move => this.draw.paintSequence(move));
+        }
+
+        playAnimation() {
+          this.allFrames.push(this.frame);
+          this.frame = [];
+
+          let playedFrame = 0;
+          this.interval = setInterval(() => {
+            console.log(this.allFrames[playedFrame], { playedFrame });
+            this.drawFrame(this.allFrames[playedFrame]);
+            playedFrame =
+              playedFrame === this.allFrames.length - 1 ? 0 : playedFrame + 1;
+          }, 375);
+        }
+
+        stopAnimation() {
+          clearInterval(this.interval);
+          this.drawFrame(this.allFrames[this.allFrames.length - 1]);
+          this.draw.nextFrameEffect();
         }
       }
 
       class Handlers {
-        draw = undefined;
-        moveHistory = undefined;
-
-        mouseDrawing = false;
-
         constructor(draw, moveHistory, canvas) {
           this.moveHistory = moveHistory;
           this.draw = draw;
@@ -138,6 +156,8 @@
           canvas.addEventListener("touchmove", this.touchMove, {
             passive: false
           });
+
+          this.mouseDrawing = false;
         }
 
         mouseDown = ({ clientX: x, clientY: y }) => {
@@ -153,9 +173,9 @@
 
         mouseMove = ({ clientX: x, clientY: y }) => {
           if (this.mouseDrawing === false) return;
-          
-          const point = { x, y} ;
-          
+
+          const point = { x, y };
+
           this.draw.line(point, this.moveHistory.last());
           this.draw.dot(point);
           this.moveHistory.push(point);
@@ -180,7 +200,9 @@
 
       const ui = {
         undo: undefined,
-        nextFrame: undefined
+        nextFrame: undefined,
+        play: undefined,
+        stop: undefined
       };
 
       const init = () => {
@@ -190,6 +212,8 @@
         new Handlers(draw, moveHistory, canvas);
         ui.undo = moveHistory.undo.bind(moveHistory);
         ui.nextFrame = moveHistory.nextFrame.bind(moveHistory);
+        ui.play = moveHistory.playAnimation.bind(moveHistory);
+        ui.stop = moveHistory.stopAnimation.bind(moveHistory);
       };
 
       document.addEventListener("DOMContentLoaded", init);
@@ -201,5 +225,7 @@
     <button class="button" onClick="ui.nextFrame()">
       move to next frame
     </button>
+    <button class="button" onClick="ui.play()">play</button>
+    <button class="button" onClick="ui.stop()">stop</button>
   </body>
 </html>
