@@ -19,7 +19,7 @@
 
       #canvas {
         width: 100%;
-        height: 90%;
+        height: 80%;
         background: darkslategray;
       }
 
@@ -148,32 +148,32 @@
         constructor(draw, moveHistory, canvas) {
           this.moveHistory = moveHistory;
           this.draw = draw;
-          canvas.addEventListener("mousedown", this.mouseDown, false);
-          canvas.addEventListener("mouseup", this.mouseUp, false);
-          canvas.addEventListener("mousemove", this.mouseMove, false);
+          canvas.addEventListener("mousedown", e => this.mouseDown(e), false);
+          canvas.addEventListener("mouseup", e => this.mouseUp(e), false);
+          canvas.addEventListener("mousemove", e => this.mouseMove(e), false);
 
-          canvas.addEventListener("touchstart", this.touchStart, {
+          canvas.addEventListener("touchstart", e => this.touchStart(e), {
             passive: false
           });
-          canvas.addEventListener("touchmove", this.touchMove, {
+          canvas.addEventListener("touchmove", e => this.touchMove(e), {
             passive: false
           });
 
           this.mouseDrawing = false;
         }
 
-        mouseDown = ({ clientX: x, clientY: y }) => {
+        mouseDown({ clientX, clientY }) {
           this.mouseDrawing = true;
-          const point = { x, y };
+          const point = { x: clientX, y: clientY };
           this.moveHistory.startMove(point);
           this.draw.dot(point);
-        };
+        }
 
-        mouseUp = () => {
+        mouseUp() {
           this.mouseDrawing = false;
-        };
+        }
 
-        touchStart = e => {
+        touchStart(e) {
           const { touches } = e;
           e.preventDefault();
 
@@ -183,19 +183,19 @@
           };
           this.moveHistory.startMove(point);
           this.draw.dot(point);
-        };
+        }
 
-        mouseMove = ({ clientX: x, clientY: y }) => {
+        mouseMove({ clientX, clientY }) {
           if (this.mouseDrawing === false) return;
 
-          const point = { x, y };
+          const point = { x: clientX, y: clientY };
 
           this.draw.line(point, this.moveHistory.last());
           this.draw.dot(point);
           this.moveHistory.push(point);
-        };
+        }
 
-        touchMove = e => {
+        touchMove(e) {
           const { touches } = e;
           e.preventDefault();
           const point = {
@@ -206,7 +206,7 @@
           this.draw.line(point, this.moveHistory.last());
           this.draw.dot(point);
           this.moveHistory.push(point);
-        };
+        }
       }
 
       const ui = {
