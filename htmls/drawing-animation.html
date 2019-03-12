@@ -130,7 +130,6 @@
 
           let playedFrame = 0;
           this.interval = setInterval(() => {
-            console.log(this.allFrames[playedFrame], { playedFrame });
             this.drawFrame(this.allFrames[playedFrame]);
             playedFrame =
               playedFrame === this.allFrames.length - 1 ? 0 : playedFrame + 1;

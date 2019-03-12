@@ -19,13 +19,13 @@
 
       #canvas {
         width: 100%;
-        height: 90%;
+        height: 80%;
         background: darkslategray;
       }
 
       .button {
-        padding: 2vh;
-        font-size: 2vh;
+        padding: 1.5vh;
+        font-size: 1.5vh;
         border-radius: 1vh;
         margin: 1vh;
       }
@@ -53,7 +53,9 @@
 
         line(from, to) {
           this.ctx.strokeStyle = "white";
+          this.ctx.shadowColor = "rgba(255, 255, 255, 0.3)";
           this.ctx.lineWidth = this.pointSize;
+          this.ctx.shadowBlur = 16;
 
           this.ctx.beginPath();
           this.ctx.moveTo(from.x, from.y);
@@ -89,7 +91,6 @@
       class MoveHistory {
         constructor(drawObject) {
           this.draw = drawObject;
-          this.allFrames = [];
           this.frame = [];
         }
 
@@ -102,43 +103,45 @@
           return lastMove[lastMove.length - 1];
         }
 
-        push(...value) {
-          this.frame[this.frame.length - 1].push(...value);
-        }
+        continueMove(point) {
+          this.draw.line(point, this.last());
+          this.draw.dot(point);
 
-        nextFrame() {
-          this.allFrames.push(this.frame);
-          this.frame = [];
-          this.draw.nextFrameEffect();
+          this.frame[this.frame.length - 1].push(point);
         }
 
         undo() {
           this.frame.pop();
-          this.drawFrame(this.frame);
+          this.drawFrame();
         }
 
-        drawFrame(frameArray) {
+        drawFrame() {
           this.draw.clear();
-          frameArray.map(move => this.draw.paintSequence(move));
+          this.frame.map(move => this.draw.paintSequence(move));
         }
 
-        playAnimation() {
-          this.allFrames.push(this.frame);
-          this.frame = [];
+        straightenLastMoves() {
+          const moveSet = this.frame.pop();
+          const newMoves = [moveSet[0]];
 
-          let playedFrame = 0;
-          this.interval = setInterval(() => {
-            console.log(this.allFrames[playedFrame], { playedFrame });
-            this.drawFrame(this.allFrames[playedFrame]);
-            playedFrame =
-              playedFrame === this.allFrames.length - 1 ? 0 : playedFrame + 1;
-          }, 375);
-        }
+          const getRate = (a, b, c) =>
+            Math.abs(a.x * (b.y - c.y) + b.x * (c.y - a.y) + c.x * (a.y - b.y));
 
-        stopAnimation() {
-          clearInterval(this.interval);
-          this.drawFrame(this.allFrames[this.allFrames.length - 1]);
-          this.draw.nextFrameEffect();
+          const lastLine = moveSet.reduce(
+            ({ start, next }, move) => {
+              if (next !== undefined) {
+                const rate = getRate(start, next, move);
+                console.log(move, rate);
+                if (rate > 1000) {
+                  newMoves.push(next);
+                }
+                // check if that point is not the same!
+              }
+              return { start, next: move };
+            },
+            { start: moveSet[0], next: undefined }
+          );
+          newMoves.push(lastLine.next);
         }
       }
 
@@ -146,61 +149,66 @@
         constructor(draw, moveHistory, canvas) {
           this.moveHistory = moveHistory;
           this.draw = draw;
-          canvas.addEventListener("mousedown", this.mouseDown, false);
-          canvas.addEventListener("mouseup", this.mouseUp, false);
-          canvas.addEventListener("mousemove", this.mouseMove, false);
+          canvas.addEventListener("mousedown", e => this.mouseDown(e), false);
+          canvas.addEventListener("mouseup", e => this.mouseUp(e), false);
+          canvas.addEventListener("mousemove", e => this.mouseMove(e), false);
 
-          canvas.addEventListener("touchstart", this.touchStart, false);
-          canvas.addEventListener("touchmove", this.touchMove, {
+          canvas.addEventListener("touchstart", e => this.touchStart(e), {
+            passive: false
+          });
+          canvas.addEventListener("touchmove", e => this.touchMove(e), {
             passive: false
           });
 
           this.mouseDrawing = false;
         }
 
-        mouseDown = ({ clientX: x, clientY: y }) => {
+        mouseDown({ clientX, clientY }) {
           this.mouseDrawing = true;
-          const point = { x, y };
+          const point = { x: clientX, y: clientY };
           this.moveHistory.startMove(point);
           this.draw.dot(point);
-        };
+        }
 
-        mouseUp = () => {
+        mouseUp() {
           this.mouseDrawing = false;
-        };
+          this.moveHistory.straightenLastMoves();
+        }
 
-        mouseMove = ({ clientX: x, clientY: y }) => {
-          if (this.mouseDrawing === false) return;
-
-          const point = { x, y };
-
-          this.draw.line(point, this.moveHistory.last());
-          this.draw.dot(point);
-          this.moveHistory.push(point);
-        };
-
-        touchStart = () => {
-          this.moveHistory.startMove();
-        };
-
-        touchMove = e => {
+        touchStart(e) {
           const { touches } = e;
           e.preventDefault();
-          const { innerWidth, innerHeight } = window;
-          const move = {
+
+          const point = {
             x: touches[0].pageX,
             y: touches[0].pageY
           };
-          this.draw.paintSequence(move);
-          this.moveHistory.push(move);
-        };
+          this.moveHistory.startMove(point);
+          this.draw.dot(point);
+        }
+
+        mouseMove({ clientX, clientY }) {
+          if (this.mouseDrawing === false) return;
+
+          const point = { x: clientX, y: clientY };
+
+          this.moveHistory.continueMove(point);
+        }
+
+        touchMove(e) {
+          const { touches } = e;
+          e.preventDefault();
+          const point = {
+            x: touches[0].pageX,
+            y: touches[0].pageY
+          };
+
+          this.moveHistory.continueMove(point);
+        }
       }
 
       const ui = {
-        undo: undefined,
-        nextFrame: undefined,
-        play: undefined,
-        stop: undefined
+        undo: undefined
       };
 
       const init = () => {
@@ -209,9 +217,6 @@
         const moveHistory = new MoveHistory(draw);
         new Handlers(draw, moveHistory, canvas);
         ui.undo = moveHistory.undo.bind(moveHistory);
-        ui.nextFrame = moveHistory.nextFrame.bind(moveHistory);
-        ui.play = moveHistory.playAnimation.bind(moveHistory);
-        ui.stop = moveHistory.stopAnimation.bind(moveHistory);
       };
 
       document.addEventListener("DOMContentLoaded", init);
